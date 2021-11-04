@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="my_primary_standard">#546e7a</color>
+    <color name="my_primary_light">#819ca9</color>
+    <color name="my_primary_dark">#29434e</color>
+    <color name="my_secondary_standard">#26a69a</color>
+    <color name="my_secondary_light">#64d8cb</color>
+    <color name="my_secondary_dark">#00766c</color>
+    <color name="text_on_primary">#ffffff</color>
+    <color name="text_on_secondary">#000000</color>
+    <color name="my_calendar_background">#eceff1</color>
 </resources>
