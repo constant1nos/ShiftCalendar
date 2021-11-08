@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ημερολόγιο Βάρδιας</string>
+    <string name="floating_button">νέο ημερολόγιο</string>
+    <string name="content_description1">δημιουργία νέου μοτίβου</string>
+    <string name="content_description2">αναζήτηση στο ημεροόγιο</string>
+    <string name="content_description3">ρυθμίσεις</string>
+    <string name="set_shift_button">προσθήκη βάρδιας</string>
+    <string name="done_button">τέλος</string>
+    <string name="day_shift">πρωινή βάρδια</string>
+    <string name="afternoon_shift">απογευματινή βάρδια</string>
+    <string name="night_shift">νυχτερινή βάρδια</string>
+    <string name="off">ρεπό</string>
+    <string name="dialog_shift_title">Επίλεξε βάρδια</string>
+    <string name="dialog_alert_message">Παρακαλώ επιλέξτε πρώτα τις επιθυμητές ημερομηνίες</string>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_alert_title">Μήνυμα συστήματος</string>
+</resources>

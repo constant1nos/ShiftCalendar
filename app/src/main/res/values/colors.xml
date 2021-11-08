@@ -16,4 +16,9 @@
     <color name="text_on_primary">#ffffff</color>
     <color name="text_on_secondary">#000000</color>
     <color name="my_calendar_background">#eceff1</color>
+    <color name="day">#fff9c4</color>
+    <color name="evening">#ffcc80</color>
+    <color name="night">#e1bee7</color>
+    <color name="off">#a5d6a7</color>
+    <color name="selected_date">#ff5722</color>
 </resources>
