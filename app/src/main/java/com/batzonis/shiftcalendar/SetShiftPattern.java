@@ -3,6 +3,9 @@ package com.batzonis.shiftcalendar;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.res.ResourcesCompat;
+
 import android.content.DialogInterface;
 
 import android.os.Bundle;
@@ -32,6 +35,7 @@ public class SetShiftPattern extends AppCompatActivity {
     // Two AlertDialogs. One for shift selection and one for messages
     AlertDialog.Builder shiftBuilder, messageBuilder;
     Calendar selectedDay;
+    int shiftDaysCounter = 0;                   // Starting point of a new shift in calendarDays list
     boolean thisDateIsAlreadySelected = false;  // flag to check if a date is already selected
 
     @Override
@@ -71,20 +75,25 @@ public class SetShiftPattern extends AppCompatActivity {
     public void onDayClickInstructions(EventDay eventDay){
         selectedDay = eventDay.getCalendar();
         // Check if the date is already selected. If it is, reset colors and raise flag
-        for(int i =0; i <= temporaryCalendarDays.size()-1; i++){
-            if(temporaryCalendarDays.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
-                temporaryCalendarDays.get(i).setBackgroundResource(R.color.my_calendar_background);
-                patternCalendar.setCalendarDays(temporaryCalendarDays);
-                temporaryCalendarDays.remove(i);
+        for(int i = 0; i < calendarDays.size(); i++){
+            if(calendarDays.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
+                if(i < shiftDaysCounter){
+                    calendarDays.remove(i);
+                    patternCalendar.setCalendarDays(calendarDays);
+                    shiftDaysCounter--;
+                }
+                else if(i >= shiftDaysCounter){
+                    calendarDays.remove(i);
+                    patternCalendar.setCalendarDays(calendarDays);
+                }
                 thisDateIsAlreadySelected = true;
                 break;
             }
         }
         if(!thisDateIsAlreadySelected){
-            temporaryCalendarDays.add(new CalendarDay(selectedDay));
-            //calendarDays.get(calendarDays.size()-1).setLabelColor(R.color.white);
-            temporaryCalendarDays.get(temporaryCalendarDays.size()-1).setBackgroundResource(R.color.selected_date);
-            patternCalendar.setCalendarDays(temporaryCalendarDays);
+            calendarDays.add(new CalendarDay(selectedDay));
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.selected_date);
+            patternCalendar.setCalendarDays(calendarDays);
         }
         thisDateIsAlreadySelected = false; //reset flag
     }
@@ -92,33 +101,32 @@ public class SetShiftPattern extends AppCompatActivity {
     // Open dialog for user to select shift and add selected dates to shift pattern
     public void addShiftToPattern(){
         // Check if there is at least one date selected by user
-        if(!temporaryCalendarDays.isEmpty()){
+        if(calendarDays.size() > shiftDaysCounter){
             shiftBuilder.setItems(R.array.shifts, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     switch (which) {
                         case 0: // day
-                            for(int i = 0; i <= temporaryCalendarDays.size()-1; i++){
-                                temporaryCalendarDays.get(i).setBackgroundResource(R.color.day);
+                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
+                                calendarDays.get(i).setBackgroundResource(R.color.day);
                             }
-                            Log.d("TEMP1", "completeShiftAddition: "+temporaryCalendarDays);
                             completeShiftAddition();
                             break;
                         case 1: // afternoon
-                            for(int i = 0; i <= temporaryCalendarDays.size()-1; i++){
-                                temporaryCalendarDays.get(i).setBackgroundResource(R.color.evening);
+                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
+                                calendarDays.get(i).setBackgroundResource(R.color.evening);
                             }
                             completeShiftAddition();
                             break;
                         case 2: // night
-                            for(int i = 0; i <= temporaryCalendarDays.size()-1; i++){
-                                temporaryCalendarDays.get(i).setBackgroundResource(R.color.night);
+                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
+                                calendarDays.get(i).setBackgroundResource(R.color.night);
                             }
                             completeShiftAddition();
                             break;
                         case 3: // off
-                            for(int i = 0; i <= temporaryCalendarDays.size()-1; i++){
-                                temporaryCalendarDays.get(i).setBackgroundResource(R.color.off);
+                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
+                                calendarDays.get(i).setBackgroundResource(R.color.off);
                             }
                             completeShiftAddition();
                             break;
@@ -144,9 +152,7 @@ public class SetShiftPattern extends AppCompatActivity {
 
     // Simple function to set CalendarView new colors, add dates to pattern and clear tempCalDays
     public void completeShiftAddition(){
-        patternCalendar.setCalendarDays(temporaryCalendarDays);
-        calendarDays.addAll(temporaryCalendarDays);
-        temporaryCalendarDays.clear();
-        Log.d("TEMP2", "completeShiftAddition: "+temporaryCalendarDays);
+        patternCalendar.setCalendarDays(calendarDays);
+        shiftDaysCounter = calendarDays.size();         // Set new starting point in calendarDays list
     }
 }
