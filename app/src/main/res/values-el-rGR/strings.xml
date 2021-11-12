@@ -15,4 +15,5 @@
     <string name="dialog_alert_message">Παρακαλώ επιλέξτε πρώτα τις επιθυμητές ημερομηνίες</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_alert_title">Μήνυμα συστήματος</string>
+    <string name="dialog_alert_no_pattern">Δε βρέθηκε αποθηκευμένο μοτίβο</string>
 </resources>

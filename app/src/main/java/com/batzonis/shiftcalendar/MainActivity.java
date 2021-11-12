@@ -1,8 +1,11 @@
 package com.batzonis.shiftcalendar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 
@@ -21,6 +24,8 @@ public class MainActivity extends AppCompatActivity {
     List<Calendar> calendars = new ArrayList<>();
     List<EventDay> events = new ArrayList<>();
     CalendarView cal;
+    int year;
+    AlertDialog.Builder messageBuilder;
     FloatingActionButton addNewPattern;
     Calendar today;
 
@@ -32,6 +37,25 @@ public class MainActivity extends AppCompatActivity {
         cal = findViewById(R.id.myCalendar);
         addNewPattern = findViewById(R.id.addNewPattern);
         cal.setCalendarDayLayout(R.layout.custom_calendar_view);
+
+        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences), MODE_PRIVATE);
+        if(sharedPreferences.contains("PatternFound")) {
+            sharedPreferences.getInt("PatternYear",year);
+        }
+        else {
+            // Show message that no stored pattern found
+            messageBuilder = new AlertDialog.Builder(this);
+            messageBuilder.setTitle(R.string.dialog_alert_title);
+            messageBuilder.setMessage(R.string.dialog_alert_no_pattern)
+                    .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            // nothing happens here
+                        }
+                    });
+            // create and show the alert dialog
+            AlertDialog messageDialog = messageBuilder.create();
+            messageDialog.show();
+        }
 
         addNewPattern.setOnClickListener(new View.OnClickListener() {
             @Override

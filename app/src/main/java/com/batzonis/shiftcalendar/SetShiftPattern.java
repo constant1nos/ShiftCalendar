@@ -8,6 +8,8 @@ import androidx.core.content.res.ResourcesCompat;
 
 import android.content.DialogInterface;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,6 +22,8 @@ import com.applandeo.materialcalendarview.listeners.OnDayClickListener;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class SetShiftPattern extends AppCompatActivity {
@@ -68,26 +72,35 @@ public class SetShiftPattern extends AppCompatActivity {
                 addShiftToPattern();
             }
         });
-
+        // Do when done button is pressed
+        doneButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                doneButtonPressed();
+            }
+        });
     }
 
     // Manage selected dates to add them in a shift
     public void onDayClickInstructions(EventDay eventDay){
         selectedDay = eventDay.getCalendar();
-        // Check if the date is already selected. If it is, reset colors and raise flag
+        // Scan calendarDays list and check if this date is already selected. There are 2 cases.
         for(int i = 0; i < calendarDays.size(); i++){
             if(calendarDays.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
+                // Case 1: A shift has already connected with this date. Remove it from the list.
                 if(i < shiftDaysCounter){
                     calendarDays.remove(i);
                     patternCalendar.setCalendarDays(calendarDays);
+                    // counter of final dates should also decrease
                     shiftDaysCounter--;
                 }
+                // Case 2: This date is not connected with a shift (fresh pickup). Just remove it.
                 else if(i >= shiftDaysCounter){
                     calendarDays.remove(i);
                     patternCalendar.setCalendarDays(calendarDays);
                 }
-                thisDateIsAlreadySelected = true;
-                break;
+                thisDateIsAlreadySelected = true;   // Raise flag to avoid next if statement
+                break;                              // Break for loop, since same date already found
             }
         }
         if(!thisDateIsAlreadySelected){
@@ -138,10 +151,11 @@ public class SetShiftPattern extends AppCompatActivity {
             shiftDialog.show();
         }
         else{
+            // Message if no date selected
             messageBuilder.setMessage(R.string.dialog_alert_message)
                     .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-
+                            // nothing happens here
                         }
                     });
             // create and show the alert dialog
@@ -153,6 +167,50 @@ public class SetShiftPattern extends AppCompatActivity {
     // Simple function to set CalendarView new colors, add dates to pattern and clear tempCalDays
     public void completeShiftAddition(){
         patternCalendar.setCalendarDays(calendarDays);
-        shiftDaysCounter = calendarDays.size();         // Set new starting point in calendarDays list
+        // Set new starting point in calendarDays list
+        shiftDaysCounter = calendarDays.size();
+    }
+
+    public void doneButtonPressed(){
+        int[] pattern = new int[calendarDays.size()];
+        // Sort the calendarDays list by date
+        Collections.sort(calendarDays, new Comparator<CalendarDay>() {
+            @Override
+            public int compare(CalendarDay o1, CalendarDay o2) {
+                return o1.getCalendar().compareTo(o2.getCalendar());
+            }
+        });
+        for(int i = 0; i < calendarDays.size(); i++){
+            //calendarDays.get(i).getBackgroundResource();
+            Log.d("BGR", "background Resource: "+calendarDays.get(i).getBackgroundResource());
+            if(calendarDays.get(i).getBackgroundResource() == 2131099878) {
+                pattern[i] = 0;
+            }
+            else if(calendarDays.get(i).getBackgroundResource() == 2131099879) {
+                pattern[i] = 1;
+            }
+            else if(calendarDays.get(i).getBackgroundResource() == 2131099880) {
+                pattern[i] = 2;
+            }
+            else if(calendarDays.get(i).getBackgroundResource() == 2131099881) {
+                pattern[i] = 3;
+            }
+        }
+        // Store to shared preferences
+        SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences),MODE_PRIVATE);
+        // Creating an Editor object to edit(write to the file)
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        // Store flag that a pattern is created
+        editor.putBoolean("PatternFound",true);
+        // Store pattern's year
+        editor.putInt("PatternYear",calendarDays.get(0).getCalendar().get(Calendar.YEAR));
+        // Store pattern's DAY_OF_YEAR. This is the first day of pattern
+        editor.putInt("PatternDayOfYear",calendarDays.get(0).getCalendar().get(Calendar.DAY_OF_YEAR));
+        for(int i = 0; i < calendarDays.size(); i++){
+            editor.putInt("PatternDay"+i,pattern[i]);
+        }
+        editor.commit();
+        Intent mainActivityIntent = new Intent(SetShiftPattern.this, MainActivity.class);
+        startActivity(mainActivityIntent);
     }
 }

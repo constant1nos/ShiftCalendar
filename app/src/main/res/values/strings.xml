@@ -20,4 +20,6 @@
     <string name="dialog_alert_message">Please select desired dates first</string>
     <string name="dialog_ok">OK</string>
     <string name="dialog_alert_title">System message</string>
+    <string name="shared_preferences" translatable="false">com.batzonis.shiftcalendar.local_data</string>
+    <string name="dialog_alert_no_pattern">No pattern found</string>
 </resources>
