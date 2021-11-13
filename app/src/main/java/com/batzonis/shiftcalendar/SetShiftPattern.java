@@ -31,9 +31,7 @@ public class SetShiftPattern extends AppCompatActivity {
     // holds pattern
     List<CalendarDay> calendarDays = new ArrayList<>();
     // holds dates of a shift each time
-    List<CalendarDay> temporaryCalendarDays = new ArrayList<>();
-    List<Calendar> calendars = new ArrayList<>();
-    List<EventDay> events = new ArrayList<>();
+    List<ShiftPattern> shiftPatternList =  new ArrayList<>();
     CalendarView patternCalendar;
     Button addShiftButton, doneButton;
     // Two AlertDialogs. One for shift selection and one for messages
@@ -90,6 +88,7 @@ public class SetShiftPattern extends AppCompatActivity {
                 // Case 1: A shift has already connected with this date. Remove it from the list.
                 if(i < shiftDaysCounter){
                     calendarDays.remove(i);
+                    shiftPatternList.remove(i);
                     patternCalendar.setCalendarDays(calendarDays);
                     // counter of final dates should also decrease
                     shiftDaysCounter--;
@@ -97,6 +96,7 @@ public class SetShiftPattern extends AppCompatActivity {
                 // Case 2: This date is not connected with a shift (fresh pickup). Just remove it.
                 else if(i >= shiftDaysCounter){
                     calendarDays.remove(i);
+                    shiftPatternList.remove(i);
                     patternCalendar.setCalendarDays(calendarDays);
                 }
                 thisDateIsAlreadySelected = true;   // Raise flag to avoid next if statement
@@ -105,8 +105,10 @@ public class SetShiftPattern extends AppCompatActivity {
         }
         if(!thisDateIsAlreadySelected){
             calendarDays.add(new CalendarDay(selectedDay));
+            shiftPatternList.add(new ShiftPattern(selectedDay));
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.selected_date);
             patternCalendar.setCalendarDays(calendarDays);
+
         }
         thisDateIsAlreadySelected = false; //reset flag
     }
@@ -122,24 +124,28 @@ public class SetShiftPattern extends AppCompatActivity {
                         case 0: // day
                             for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
                                 calendarDays.get(i).setBackgroundResource(R.color.day);
+                                shiftPatternList.get(i).setShift(ShiftPattern.DAY);
                             }
                             completeShiftAddition();
                             break;
                         case 1: // afternoon
                             for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
                                 calendarDays.get(i).setBackgroundResource(R.color.evening);
+                                shiftPatternList.get(i).setShift(ShiftPattern.EVENING);
                             }
                             completeShiftAddition();
                             break;
                         case 2: // night
                             for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
                                 calendarDays.get(i).setBackgroundResource(R.color.night);
+                                shiftPatternList.get(i).setShift(ShiftPattern.NIGHT);
                             }
                             completeShiftAddition();
                             break;
                         case 3: // off
                             for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
                                 calendarDays.get(i).setBackgroundResource(R.color.off);
+                                shiftPatternList.get(i).setShift(ShiftPattern.OFF);
                             }
                             completeShiftAddition();
                             break;
@@ -172,29 +178,15 @@ public class SetShiftPattern extends AppCompatActivity {
     }
 
     public void doneButtonPressed(){
-        int[] pattern = new int[calendarDays.size()];
         // Sort the calendarDays list by date
-        Collections.sort(calendarDays, new Comparator<CalendarDay>() {
+        Collections.sort(shiftPatternList, new Comparator<ShiftPattern>() {
             @Override
-            public int compare(CalendarDay o1, CalendarDay o2) {
+            public int compare(ShiftPattern o1, ShiftPattern o2) {
                 return o1.getCalendar().compareTo(o2.getCalendar());
             }
         });
-        for(int i = 0; i < calendarDays.size(); i++){
-            //calendarDays.get(i).getBackgroundResource();
-            Log.d("BGR", "background Resource: "+calendarDays.get(i).getBackgroundResource());
-            if(calendarDays.get(i).getBackgroundResource() == 2131099878) {
-                pattern[i] = 0;
-            }
-            else if(calendarDays.get(i).getBackgroundResource() == 2131099879) {
-                pattern[i] = 1;
-            }
-            else if(calendarDays.get(i).getBackgroundResource() == 2131099880) {
-                pattern[i] = 2;
-            }
-            else if(calendarDays.get(i).getBackgroundResource() == 2131099881) {
-                pattern[i] = 3;
-            }
+        for(int i = 0; i < shiftPatternList.size(); i++){
+            Log.d("SPSIZE", "Date: "+shiftPatternList.get(i).getCalendar().get(Calendar.DATE)+", shift: "+shiftPatternList.get(i).getShift());
         }
         // Store to shared preferences
         SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences),MODE_PRIVATE);
@@ -203,11 +195,11 @@ public class SetShiftPattern extends AppCompatActivity {
         // Store flag that a pattern is created
         editor.putBoolean("PatternFound",true);
         // Store pattern's year
-        editor.putInt("PatternYear",calendarDays.get(0).getCalendar().get(Calendar.YEAR));
+        editor.putInt("PatternYear",shiftPatternList.get(0).getCalendar().get(Calendar.YEAR));
         // Store pattern's DAY_OF_YEAR. This is the first day of pattern
-        editor.putInt("PatternDayOfYear",calendarDays.get(0).getCalendar().get(Calendar.DAY_OF_YEAR));
-        for(int i = 0; i < calendarDays.size(); i++){
-            editor.putInt("PatternDay"+i,pattern[i]);
+        editor.putInt("PatternDayOfYear",shiftPatternList.get(0).getCalendar().get(Calendar.DAY_OF_YEAR));
+        for(int i = 0; i < shiftPatternList.size(); i++){
+            editor.putInt("PatternDay"+i,shiftPatternList.get(i).getShift());
         }
         editor.commit();
         Intent mainActivityIntent = new Intent(SetShiftPattern.this, MainActivity.class);
