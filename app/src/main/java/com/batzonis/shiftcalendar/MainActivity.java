@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.applandeo.materialcalendarview.CalendarDay;
@@ -24,10 +25,15 @@ public class MainActivity extends AppCompatActivity {
     List<Calendar> calendars = new ArrayList<>();
     List<EventDay> events = new ArrayList<>();
     CalendarView cal;
-    int year;
     AlertDialog.Builder messageBuilder;
     FloatingActionButton addNewPattern;
-    Calendar today;
+    int year, dayOfYear, patternSize, shift;
+    int numberOfLoops = 10; // how many times the pattern will cover calendarView
+    // List to hold the shifts
+    List<ShiftPattern> shiftPatternList =  new ArrayList<>();
+    Calendar shiftCalendar;
+
+    boolean pattern = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +45,12 @@ public class MainActivity extends AppCompatActivity {
         cal.setCalendarDayLayout(R.layout.custom_calendar_view);
 
         SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences), MODE_PRIVATE);
-        if(sharedPreferences.contains("PatternFound")) {
-            sharedPreferences.getInt("PatternYear",year);
+        // Check if a pattern has already been set
+        if(sharedPreferences.contains("PatternFound"))
+            pattern = sharedPreferences.getBoolean("PatternFound",pattern);
+        if(pattern) {
+            getShiftPatternData(sharedPreferences);
+            drawShiftsToCalendar();
         }
         else {
             // Show message that no stored pattern found
@@ -65,18 +75,53 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-/* Start test: fill day cells manually */
-//        for(int i = 1; i<30; i++){
-//            today = Calendar.getInstance();
-//            today.add(Calendar.DATE,i);
-//            events.add(new EventDay(today,R.drawable.day));
-//            calendarDays.add(new CalendarDay(today));
-//            calendarDays.get(i-1).setLabelColor(R.color.white);
-//            calendarDays.get(i-1).setBackgroundResource(R.color.purple_200);
-//        }
-//        cal.setEvents(events);
-//        cal.setCalendarDays(calendarDays);
-/* End of test*/
+    }
 
+    // Retrieve data from shared preferences
+    public void getShiftPatternData(SharedPreferences sharedPreferences) {
+
+        year = sharedPreferences.getInt("PatternYear" ,year);
+        dayOfYear = sharedPreferences.getInt("PatternDayOfYear", dayOfYear);
+        patternSize = sharedPreferences.getInt("PatternSize", patternSize);
+        // save shifts on the list
+        for(int i = 0; i < patternSize; i++) {
+            shift = sharedPreferences.getInt("PatternDay"+i,shift);
+            shiftPatternList.add(new ShiftPattern(shift));
+        }
+
+    }
+
+    // change color and icon on each date, base on the shift
+    public void drawShiftsToCalendar() {
+
+        for(int i = 0; i <= numberOfLoops; i++) {
+            for(int j = 0; j < shiftPatternList.size(); j++) {
+                // set calendar to shift pattern's first date
+                shiftCalendar = Calendar.getInstance();
+                shiftCalendar.set(Calendar.YEAR, year);
+                shiftCalendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
+                // move shiftCalendar to the next day
+                shiftCalendar.add(Calendar.DATE, (i*patternSize)+j);
+                // add this date to calendarDays
+                calendarDays.add(new CalendarDay(shiftCalendar));
+                // setup selected calendarDay background color
+                if(shiftPatternList.get(j).getShift() == ShiftPattern.DAY) {
+                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.day);
+                }
+                else if(shiftPatternList.get(j).getShift() == ShiftPattern.EVENING) {
+                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.evening);
+                }
+                else if(shiftPatternList.get(j).getShift() == ShiftPattern.NIGHT) {
+                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.night);
+                }
+                else if(shiftPatternList.get(j).getShift() == ShiftPattern.OFF) {
+                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.off);
+                }
+                else {
+                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.black);
+                }
+            }
+        }
+        cal.setCalendarDays(calendarDays);
     }
 }

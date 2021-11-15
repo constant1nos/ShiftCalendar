@@ -32,10 +32,12 @@ public class SetShiftPattern extends AppCompatActivity {
     List<CalendarDay> calendarDays = new ArrayList<>();
     // holds dates of a shift each time
     List<ShiftPattern> shiftPatternList =  new ArrayList<>();
+    // the views
     CalendarView patternCalendar;
     Button addShiftButton, doneButton;
     // Two AlertDialogs. One for shift selection and one for messages
     AlertDialog.Builder shiftBuilder, messageBuilder;
+
     Calendar selectedDay;
     int shiftDaysCounter = 0;                   // Starting point of a new shift in calendarDays list
     boolean thisDateIsAlreadySelected = false;  // flag to check if a date is already selected
@@ -185,9 +187,6 @@ public class SetShiftPattern extends AppCompatActivity {
                 return o1.getCalendar().compareTo(o2.getCalendar());
             }
         });
-        for(int i = 0; i < shiftPatternList.size(); i++){
-            Log.d("SPSIZE", "Date: "+shiftPatternList.get(i).getCalendar().get(Calendar.DATE)+", shift: "+shiftPatternList.get(i).getShift());
-        }
         // Store to shared preferences
         SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences),MODE_PRIVATE);
         // Creating an Editor object to edit(write to the file)
@@ -198,6 +197,8 @@ public class SetShiftPattern extends AppCompatActivity {
         editor.putInt("PatternYear",shiftPatternList.get(0).getCalendar().get(Calendar.YEAR));
         // Store pattern's DAY_OF_YEAR. This is the first day of pattern
         editor.putInt("PatternDayOfYear",shiftPatternList.get(0).getCalendar().get(Calendar.DAY_OF_YEAR));
+        // Store pattern's size (total days)
+        editor.putInt("PatternSize",shiftPatternList.size());
         for(int i = 0; i < shiftPatternList.size(); i++){
             editor.putInt("PatternDay"+i,shiftPatternList.get(i).getShift());
         }
