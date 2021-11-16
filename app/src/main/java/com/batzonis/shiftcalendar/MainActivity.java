@@ -94,34 +94,84 @@ public class MainActivity extends AppCompatActivity {
     // change color and icon on each date, base on the shift
     public void drawShiftsToCalendar() {
 
+        // firstly fill the first days from now till the end of the pattern
+        int shiftThisDay = findShiftThisDay(Calendar.getInstance());
+        for(int k = shiftThisDay; k < shiftPatternList.size(); k++) {
+            shiftCalendar = Calendar.getInstance();
+            shiftCalendar.add(Calendar.DATE, k-shiftThisDay);
+            // add this date to calendarDays
+            calendarDays.add(new CalendarDay(shiftCalendar));
+            setShiftEvents(k, shiftCalendar);
+        }
+        // then fill calendar with the shifts, for as many days as numberOfLoops
         for(int i = 0; i <= numberOfLoops; i++) {
             for(int j = 0; j < shiftPatternList.size(); j++) {
                 // set calendar to shift pattern's first date
                 shiftCalendar = Calendar.getInstance();
-                shiftCalendar.set(Calendar.YEAR, year);
-                shiftCalendar.set(Calendar.DAY_OF_YEAR, dayOfYear);
                 // move shiftCalendar to the next day
-                shiftCalendar.add(Calendar.DATE, (i*patternSize)+j);
+                shiftCalendar.add(Calendar.DATE, (i*patternSize)+j+(patternSize-shiftThisDay));
                 // add this date to calendarDays
                 calendarDays.add(new CalendarDay(shiftCalendar));
                 // setup selected calendarDay background color
-                if(shiftPatternList.get(j).getShift() == ShiftPattern.DAY) {
-                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.day);
-                }
-                else if(shiftPatternList.get(j).getShift() == ShiftPattern.EVENING) {
-                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.evening);
-                }
-                else if(shiftPatternList.get(j).getShift() == ShiftPattern.NIGHT) {
-                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.night);
-                }
-                else if(shiftPatternList.get(j).getShift() == ShiftPattern.OFF) {
-                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.off);
-                }
-                else {
-                    calendarDays.get((i*patternSize)+j).setBackgroundResource(R.color.black);
-                }
+                setShiftEvents(j, shiftCalendar);
             }
         }
         cal.setCalendarDays(calendarDays);
+        cal.setEvents(events);
+    }
+
+    public void setShiftEvents(int i, Calendar calendar) {
+        if(shiftPatternList.get(i).getShift() == ShiftPattern.DAY) {
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.day);
+            events.add(new EventDay(calendar, R.drawable.day));
+        }
+        else if(shiftPatternList.get(i).getShift() == ShiftPattern.EVENING) {
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.evening);
+            events.add(new EventDay(calendar, R.drawable.evening));
+        }
+        else if(shiftPatternList.get(i).getShift() == ShiftPattern.NIGHT) {
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.night);
+            events.add(new EventDay(calendar, R.drawable.night));
+        }
+        else if(shiftPatternList.get(i).getShift() == ShiftPattern.OFF) {
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.off);
+            events.add(new EventDay(calendar, R.drawable.off));
+        }
+        else {
+            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.black);
+        }
+    }
+
+    // finds the day in the pattern for a specific date
+    public int findShiftThisDay(Calendar thisDay) {
+
+        int thisYear, thisDayOfYear, dayInPattern = 0;
+
+        thisYear = thisDay.get(Calendar.YEAR);
+        thisDayOfYear = thisDay.get(Calendar.DAY_OF_YEAR);
+
+        // check if wanted year is greater than pattern's year
+        if(thisYear == year) {
+            dayInPattern = (thisDayOfYear - dayOfYear)%patternSize;
+        }
+        else if(thisYear > year) {
+            // take the remaining days of pattern's year
+            dayInPattern = totalDaysOfYear(year) - dayOfYear;
+            // add all days from full years
+            for(int i = year+1; i < thisYear; i++) {
+                dayInPattern += totalDaysOfYear(i);
+            }
+            // add days from the beginning of selected year, till DAY_OF_YEAR
+            dayInPattern += thisDayOfYear;
+            dayInPattern = dayInPattern%patternSize;
+        }
+        return dayInPattern;
+    }
+
+    // returns the total days of selected year
+    public int totalDaysOfYear(int thisYear) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, thisYear);
+        return cal.getActualMaximum(Calendar.DAY_OF_YEAR);
     }
 }
