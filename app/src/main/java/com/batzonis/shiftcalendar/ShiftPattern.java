@@ -50,4 +50,37 @@ public class ShiftPattern {
     public void setShift(int shift) {
         this.shift = shift;
     }
+
+    // finds the day in the pattern for a specific date
+    public static int findShiftThisDay(Calendar thisDay, int year, int dayOfYear, int patternSize) {
+
+        int thisYear, thisDayOfYear, dayInPattern = 0;
+
+        thisYear = thisDay.get(Calendar.YEAR);
+        thisDayOfYear = thisDay.get(Calendar.DAY_OF_YEAR);
+
+        // check if wanted year is greater than pattern's year
+        if(thisYear == year) {
+            dayInPattern = (thisDayOfYear - dayOfYear) % patternSize;
+        }
+        else if(thisYear > year) {
+            // take the remaining days of pattern's year
+            dayInPattern = totalDaysOfYear(year) - dayOfYear;
+            // add all days from full years
+            for(int i = year+1; i < thisYear; i++) {
+                dayInPattern += totalDaysOfYear(i);
+            }
+            // add days from the beginning of selected year, till DAY_OF_YEAR
+            dayInPattern += thisDayOfYear;
+            dayInPattern = dayInPattern % patternSize;
+        }
+        return dayInPattern;
+    }
+
+    // returns the total days of selected year
+    private static int totalDaysOfYear(int thisYear) {
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, thisYear);
+        return cal.getActualMaximum(Calendar.DAY_OF_YEAR);
+    }
 }

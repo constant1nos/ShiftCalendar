@@ -7,50 +7,75 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 
 import com.applandeo.materialcalendarview.CalendarDay;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
+import com.applandeo.materialcalendarview.listeners.OnCalendarPageChangeListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
 
+    // holds calendarDays list of shifts and colors
     List<CalendarDay> calendarDays = new ArrayList<>();
-    List<Calendar> calendars = new ArrayList<>();
+    // created to delete a specified part of calendarDays
+    List<CalendarDay> calendarDaysSubList = new ArrayList<>();
     List<EventDay> events = new ArrayList<>();
     CalendarView cal;
     AlertDialog.Builder messageBuilder;
     FloatingActionButton addNewPattern;
+    // variables to hold data locally from shared preferences
     int year, dayOfYear, patternSize, shift;
-    int numberOfLoops = 10; // how many times the pattern will cover calendarView
     // List to hold the shifts
     List<ShiftPattern> shiftPatternList =  new ArrayList<>();
     Calendar shiftCalendar;
+    // executor to make calculations of calendarDays on another thread
+    ExecutorService executor = Executors.newFixedThreadPool(4);
+    // handler to handle calendar's set events
+    Handler handler = new Handler(Looper.getMainLooper());
 
-    boolean pattern = false;
+    boolean initialSetup = false;   // flag to know if the initial setup is completed
+    boolean patternIsSet = false;   // check if a pattern already created from shared preferences
+    int calendarLeftRightValue = 0; // value to count when user moved to next or previous month
+    // 2 flags to know if user moved to next or previous month of calendar view
+    boolean drawForward = false, drawBackward = false;
+    // counters of first and last day of calendarDays list
+    int firstDayOfList, lastDayOfList;
+    // holds the difference between this day's shift and pattern's remaining days
+    int difference = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // binding of views
         cal = findViewById(R.id.myCalendar);
         addNewPattern = findViewById(R.id.addNewPattern);
         cal.setCalendarDayLayout(R.layout.custom_calendar_view);
 
+        // read data from shared preferences
         SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences), MODE_PRIVATE);
         // Check if a pattern has already been set
         if(sharedPreferences.contains("PatternFound"))
-            pattern = sharedPreferences.getBoolean("PatternFound",pattern);
-        if(pattern) {
+            patternIsSet = sharedPreferences.getBoolean("PatternFound",patternIsSet);
+        if(patternIsSet) {
             getShiftPatternData(sharedPreferences);
             drawShiftsToCalendar();
+            cal.setCalendarDays(calendarDays);
+            //cal.setEvents(events);
         }
         else {
             // Show message that no stored pattern found
@@ -67,6 +92,7 @@ public class MainActivity extends AppCompatActivity {
             messageDialog.show();
         }
 
+        // add new pattern. Move to SetShiftPattern activity
         addNewPattern.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -75,13 +101,80 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // listener of moving to next month of calendar view
+        cal.setOnForwardPageChangeListener(new OnCalendarPageChangeListener() {
+            @Override
+            public void onChange() {
+                calendarLeftRightValue++;
+                drawForward = true;
+                drawBackward = false;
+                if(patternIsSet) {
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            // freeze thread to avoid stopping animation of scrolling to next month
+                            try {
+                                Thread.sleep(400);
+                                drawShiftsToCalendar();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            // handler does any job must be in UI
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // setup UI
+                                    cal.setCalendarDays(calendarDays);
+                                    //cal.setEvents(events);
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        });
+
+        // listener of moving to next month of calendar view
+        cal.setOnPreviousPageChangeListener(new OnCalendarPageChangeListener() {
+            @Override
+            public void onChange() {
+                calendarLeftRightValue--;
+                drawBackward = true;
+                drawForward = false;
+                if(patternIsSet) {
+                    executor.execute(new Runnable() {
+                        @Override
+                        public void run() {
+                            // // freeze thread to avoid stopping animation of scrolling to previous month
+                            try {
+                                Thread.sleep(400);
+                                drawShiftsToCalendar();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            // handler does any job must be in UI
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // setup UI
+                                    cal.setCalendarDays(calendarDays);
+                                    //cal.setEvents(events);
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        });
     }
 
     // Retrieve data from shared preferences
     public void getShiftPatternData(SharedPreferences sharedPreferences) {
 
+        // first date of pattern (year and day of year)
         year = sharedPreferences.getInt("PatternYear" ,year);
         dayOfYear = sharedPreferences.getInt("PatternDayOfYear", dayOfYear);
+
         patternSize = sharedPreferences.getInt("PatternSize", patternSize);
         // save shifts on the list
         for(int i = 0; i < patternSize; i++) {
@@ -94,84 +187,103 @@ public class MainActivity extends AppCompatActivity {
     // change color and icon on each date, base on the shift
     public void drawShiftsToCalendar() {
 
+        // holds today's shift
+        int shiftThisDay;
         // firstly fill the first days from now till the end of the pattern
-        int shiftThisDay = findShiftThisDay(Calendar.getInstance());
-        for(int k = shiftThisDay; k < shiftPatternList.size(); k++) {
-            shiftCalendar = Calendar.getInstance();
-            shiftCalendar.add(Calendar.DATE, k-shiftThisDay);
-            // add this date to calendarDays
-            calendarDays.add(new CalendarDay(shiftCalendar));
-            setShiftEvents(k, shiftCalendar);
-        }
-        // then fill calendar with the shifts, for as many days as numberOfLoops
-        for(int i = 0; i <= numberOfLoops; i++) {
-            for(int j = 0; j < shiftPatternList.size(); j++) {
+        if(!initialSetup) {
+            shiftThisDay = ShiftPattern.findShiftThisDay(Calendar.getInstance(), year, dayOfYear, patternSize);
+            difference = patternSize - shiftThisDay;
+            for(int k = shiftThisDay; k < shiftPatternList.size(); k++) {
+                shiftCalendar = Calendar.getInstance();
+                shiftCalendar.add(Calendar.DATE, k - shiftThisDay);
+                // add this date to calendarDays
+                calendarDays.add(new CalendarDay(shiftCalendar));
+                setShiftEvents(k, shiftCalendar);
+            }
+            lastDayOfList = 0;
+            while (calendarDays.size() < 150) {
                 // set calendar to shift pattern's first date
                 shiftCalendar = Calendar.getInstance();
                 // move shiftCalendar to the next day
-                shiftCalendar.add(Calendar.DATE, (i*patternSize)+j+(patternSize-shiftThisDay));
+                shiftCalendar.add(Calendar.DATE, difference + lastDayOfList);
                 // add this date to calendarDays
                 calendarDays.add(new CalendarDay(shiftCalendar));
                 // setup selected calendarDay background color
-                setShiftEvents(j, shiftCalendar);
+                setShiftEvents(lastDayOfList % patternSize, shiftCalendar);
+                lastDayOfList++;
             }
+            initialSetup = true; // declare that initial setup has been done
+            lastDayOfList = 149;    // the last index of calendarDays after initial setup
+            firstDayOfList = 0;     // the first index od calendarDays
         }
-        cal.setCalendarDays(calendarDays);
-        cal.setEvents(events);
+        // do if user moved to next month
+        if(calendarLeftRightValue >= 3 && drawForward) {
+            // delete the first 35 days of shifts on calendarDays
+            calendarDaysSubList = calendarDays.subList(0, 30);
+            calendarDaysSubList.clear();
+            for(int i = 0; i < 30; i++) {
+                shiftCalendar = Calendar.getInstance();
+                // move shiftCalendar to the next day
+                lastDayOfList++;
+                firstDayOfList++;
+                shiftCalendar.add(Calendar.DATE, lastDayOfList);
+                // add this date to calendarDays
+                calendarDays.add(new CalendarDay(shiftCalendar));
+                setShiftEvents((lastDayOfList - difference) % patternSize, shiftCalendar);
+            }
+            drawForward = false; // reset flag
+        }
+        // do if user moved to previous month
+        else if(calendarLeftRightValue >= 2 && drawBackward) {
+            // delete the last 35 days of shifts on calendarDays
+            calendarDaysSubList = calendarDays.subList(calendarDays.size()-30, calendarDays.size());
+            calendarDaysSubList.clear();
+            // add 30 days at the beginning of the list
+            for(int i = 0; i < 30; i++) {
+                shiftCalendar = Calendar.getInstance();
+                //Log.d("TEST2", "calendar get(0): "+calendarDays.get(0).getCalendar().get(Calendar.DAY_OF_YEAR));
+                lastDayOfList--;
+                firstDayOfList--;
+                shiftCalendar.add(Calendar.DATE, firstDayOfList);
+                // add this date to calendarDays
+                calendarDays.add(new CalendarDay(shiftCalendar));
+                if(firstDayOfList < difference) {
+                    setShiftEvents((patternSize - difference + firstDayOfList) % patternSize, shiftCalendar);
+                }
+                else
+                    setShiftEvents((firstDayOfList - difference) % patternSize, shiftCalendar);
+            }
+            // sort calendarDays by date
+            Collections.sort(calendarDays, new Comparator<CalendarDay>() {
+                @Override
+                public int compare(CalendarDay o1, CalendarDay o2) {
+                    return o1.getCalendar().compareTo(o2.getCalendar());
+                }
+            });
+            drawBackward = false; // reset flag
+        }
     }
 
+    // setup color and icon for a specific shift
     public void setShiftEvents(int i, Calendar calendar) {
         if(shiftPatternList.get(i).getShift() == ShiftPattern.DAY) {
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.day);
-            events.add(new EventDay(calendar, R.drawable.day));
+            //events.add(new EventDay(calendar, R.drawable.day));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.EVENING) {
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.evening);
-            events.add(new EventDay(calendar, R.drawable.evening));
+            //events.add(new EventDay(calendar, R.drawable.evening));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.NIGHT) {
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.night);
-            events.add(new EventDay(calendar, R.drawable.night));
+            //events.add(new EventDay(calendar, R.drawable.night));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.OFF) {
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.off);
-            events.add(new EventDay(calendar, R.drawable.off));
+            //events.add(new EventDay(calendar, R.drawable.off));
         }
         else {
             calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.black);
         }
-    }
-
-    // finds the day in the pattern for a specific date
-    public int findShiftThisDay(Calendar thisDay) {
-
-        int thisYear, thisDayOfYear, dayInPattern = 0;
-
-        thisYear = thisDay.get(Calendar.YEAR);
-        thisDayOfYear = thisDay.get(Calendar.DAY_OF_YEAR);
-
-        // check if wanted year is greater than pattern's year
-        if(thisYear == year) {
-            dayInPattern = (thisDayOfYear - dayOfYear)%patternSize;
-        }
-        else if(thisYear > year) {
-            // take the remaining days of pattern's year
-            dayInPattern = totalDaysOfYear(year) - dayOfYear;
-            // add all days from full years
-            for(int i = year+1; i < thisYear; i++) {
-                dayInPattern += totalDaysOfYear(i);
-            }
-            // add days from the beginning of selected year, till DAY_OF_YEAR
-            dayInPattern += thisDayOfYear;
-            dayInPattern = dayInPattern%patternSize;
-        }
-        return dayInPattern;
-    }
-
-    // returns the total days of selected year
-    public int totalDaysOfYear(int thisYear) {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, thisYear);
-        return cal.getActualMaximum(Calendar.DAY_OF_YEAR);
     }
 }
