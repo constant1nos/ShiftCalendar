@@ -12,7 +12,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 
-import com.applandeo.materialcalendarview.CalendarDay;
+//import com.applandeo.materialcalendarview.CalendarDay;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
 import com.applandeo.materialcalendarview.listeners.OnCalendarPageChangeListener;
@@ -26,12 +26,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+//import kotlin.jvm.functions.Function1;
+
 public class MainActivity extends AppCompatActivity {
 
     // holds calendarDays list of shifts and colors
-    List<CalendarDay> calendarDays = new ArrayList<>();
+//    List<CalendarDay> calendarDays = new ArrayList<>();
     // created to delete a specified part of calendarDays
-    List<CalendarDay> calendarDaysSubList = new ArrayList<>();
+//    List<CalendarDay> calendarDaysSubList = new ArrayList<>();
     // holds events list of shifts and icons
     List<EventDay> events = new ArrayList<>();
     List<EventDay> eventsSubList = new ArrayList<>();
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         // binding of views
         cal = findViewById(R.id.myCalendar);
         addNewPattern = findViewById(R.id.addNewPattern);
-        cal.setCalendarDayLayout(R.layout.custom_calendar_view);
+//        cal.setCalendarDayLayout(R.layout.custom_calendar_view);
 
         // read data from shared preferences
         SharedPreferences sharedPreferences = getSharedPreferences(getString(R.string.shared_preferences), MODE_PRIVATE);
@@ -76,9 +78,19 @@ public class MainActivity extends AppCompatActivity {
             patternIsSet = sharedPreferences.getBoolean("PatternFound",patternIsSet);
         if(patternIsSet) {
             getShiftPatternData(sharedPreferences);
-            drawShiftsToCalendar();
-            cal.setCalendarDays(calendarDays);
-            cal.setEvents(events);
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    drawShiftsToCalendar();
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+//                            cal.setCalendarDays(calendarDays);
+                            cal.setEvents(events);
+                        }
+                    });
+                }
+            });
         }
         else {
             // Show message that no stored pattern found
@@ -96,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // add new pattern. Move to SetShiftPattern activity
-        addNewPattern.setOnClickListener(new View.OnClickListener() {
+       addNewPattern.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent calendarIntent = new Intent(MainActivity.this, SetShiftPattern.class);
@@ -104,8 +116,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // listener of moving to next month of calendar view
-        cal.setOnForwardPageChangeListener(new OnCalendarPageChangeListener() {
+/*        // listener of moving to next month of calendar view
+       cal.setOnForwardPageChangeListener(new OnCalendarPageChangeListener() {
             @Override
             public void onChange() {
                 calendarLeftRightValue++;
@@ -113,14 +125,13 @@ public class MainActivity extends AppCompatActivity {
                 drawBackward = false;
                 if(patternIsSet) {
                     drawShiftsToCalendar();
-                    Log.d("TIME2", "time: "+(endTime-startTime));
-                    handler.postDelayed(new Runnable() {
+                    handler.post(new Runnable() {
                         @Override
                         public void run() {
-                            cal.setCalendarDays(calendarDays);
+//                            cal.setCalendarDays(calendarDays);
                             cal.setEvents(events);
                         }
-                    }, 400);
+                    });
                 }
             }
         });
@@ -134,18 +145,18 @@ public class MainActivity extends AppCompatActivity {
                 drawForward = false;
                 if(patternIsSet) {
                     drawShiftsToCalendar();
-                    handler.postDelayed(new Runnable(){
+                    handler.post(new Runnable(){
                         @Override
                         public void run() {
-                            cal.setCalendarDays(calendarDays);
+//                            cal.setCalendarDays(calendarDays);
                             cal.setEvents(events);
                         }
-                    }, 400);
+                    });
                 }
             }
         });
+*/
     }
-
     // Retrieve data from shared preferences
     public void getShiftPatternData(SharedPreferences sharedPreferences) {
 
@@ -164,7 +175,6 @@ public class MainActivity extends AppCompatActivity {
 
     // change color and icon on each date, base on the shift
     public void drawShiftsToCalendar() {
-        Log.d("TEST3", "left right counter: "+calendarLeftRightValue);
         // holds today's shift
         int shiftThisDay;
         // firstly fill the first days from now till the end of the pattern
@@ -175,32 +185,32 @@ public class MainActivity extends AppCompatActivity {
                 shiftCalendar = Calendar.getInstance();
                 shiftCalendar.add(Calendar.DATE, k - shiftThisDay);
                 // add this date to calendarDays
-                calendarDays.add(new CalendarDay(shiftCalendar));
+//                calendarDays.add(new CalendarDay(shiftCalendar));
                 setShiftEvents(k, shiftCalendar);
             }
             lastDayOfList = 0;
-            while (calendarDays.size() < 150) {
+            while (events.size() < 400) {
                 // set calendar to shift pattern's first date
                 shiftCalendar = Calendar.getInstance();
                 // move shiftCalendar to the next day
                 shiftCalendar.add(Calendar.DATE, difference + lastDayOfList);
                 // add this date to calendarDays
-                calendarDays.add(new CalendarDay(shiftCalendar));
+//                calendarDays.add(new CalendarDay(shiftCalendar));
                 // setup selected calendarDay background color
                 setShiftEvents(lastDayOfList % patternSize, shiftCalendar);
                 lastDayOfList++;
             }
             initialSetup = true;    // declare that initial setup has been done
-            lastDayOfList = 149;    // the last index of calendarDays after initial setup
+            lastDayOfList--;        // the last index of calendarDays after initial setup
             firstDayOfList = 0;     // the first index od calendarDays
         }
         // do if user moved to next month
-        if(calendarLeftRightValue >= 3 && drawForward) {
+        if(calendarLeftRightValue >= 1 && drawForward) {
             // delete the first 30 days of shifts on calendarDays
-            calendarDaysSubList = calendarDays.subList(0, 30);
-            calendarDaysSubList.clear();
+//            calendarDaysSubList = calendarDays.subList(0, 29);
+//            calendarDaysSubList.clear();
             // delete the first 30 days of shifts on events
-            eventsSubList = events.subList(0, 30);
+            eventsSubList = events.subList(0, 29);
             eventsSubList.clear();
             for(int i = 0; i < 30; i++) {
                 shiftCalendar = Calendar.getInstance();
@@ -209,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
                 firstDayOfList++;
                 shiftCalendar.add(Calendar.DATE, lastDayOfList);
                 // add this date to calendarDays
-                calendarDays.add(new CalendarDay(shiftCalendar));
+//                calendarDays.add(new CalendarDay(shiftCalendar));
                 setShiftEvents((lastDayOfList - difference) % patternSize, shiftCalendar);
             }
             drawForward = false; // reset flag
@@ -217,8 +227,8 @@ public class MainActivity extends AppCompatActivity {
         // do if user moved to previous month
         else if(calendarLeftRightValue >= 2 && drawBackward) {
             // delete the last 30 days of shifts on calendarDays
-            calendarDaysSubList = calendarDays.subList(calendarDays.size()-30, calendarDays.size());
-            calendarDaysSubList.clear();
+//            calendarDaysSubList = calendarDays.subList(calendarDays.size()-30, calendarDays.size());
+//            calendarDaysSubList.clear();
             // delete the last 30 days of shifts on events
             eventsSubList = events.subList(events.size()-30, events.size());
             eventsSubList.clear();
@@ -230,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
                 firstDayOfList--;
                 shiftCalendar.add(Calendar.DATE, firstDayOfList);
                 // add this date to calendarDays
-                calendarDays.add(new CalendarDay(shiftCalendar));
+//                calendarDays.add(new CalendarDay(shiftCalendar));
                 if(firstDayOfList < difference) {
                     setShiftEvents((patternSize - difference + firstDayOfList) % patternSize, shiftCalendar);
                 }
@@ -238,12 +248,13 @@ public class MainActivity extends AppCompatActivity {
                     setShiftEvents((firstDayOfList - difference) % patternSize, shiftCalendar);
             }
             // sort calendarDays by date
-            Collections.sort(calendarDays, new Comparator<CalendarDay>() {
+ /*           Collections.sort(calendarDays, new Comparator<CalendarDay>() {
                 @Override
                 public int compare(CalendarDay o1, CalendarDay o2) {
                     return o1.getCalendar().compareTo(o2.getCalendar());
                 }
             });
+  */
             // sort events by date
             Collections.sort(events, new Comparator<EventDay>() {
                 @Override
@@ -258,23 +269,23 @@ public class MainActivity extends AppCompatActivity {
     // setup color and icon for a specific shift
     public void setShiftEvents(int i, Calendar calendar) {
         if(shiftPatternList.get(i).getShift() == ShiftPattern.DAY) {
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.day);
+//            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.day);
             events.add(new EventDay(calendar, R.drawable.day));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.EVENING) {
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.evening);
+//            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.evening);
             events.add(new EventDay(calendar, R.drawable.evening));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.NIGHT) {
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.night);
+//            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.night);
             events.add(new EventDay(calendar, R.drawable.night));
         }
         else if(shiftPatternList.get(i).getShift() == ShiftPattern.OFF) {
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.off);
+//            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.off);
             events.add(new EventDay(calendar, R.drawable.off));
         }
         else {
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.black);
+//            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.black);
         }
     }
 }

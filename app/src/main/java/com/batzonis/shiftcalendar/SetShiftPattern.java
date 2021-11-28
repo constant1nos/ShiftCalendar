@@ -12,7 +12,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-import com.applandeo.materialcalendarview.CalendarDay;
+//import com.applandeo.materialcalendarview.CalendarDay;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
 import com.applandeo.materialcalendarview.listeners.OnDayClickListener;
@@ -26,7 +26,7 @@ import java.util.List;
 public class SetShiftPattern extends AppCompatActivity {
 
     // holds pattern
-    List<CalendarDay> calendarDays = new ArrayList<>();
+//    List<CalendarDay> calendarDays = new ArrayList<>();
     // holds dates of a shift each time
     List<ShiftPattern> shiftPatternList =  new ArrayList<>();
     // the views
@@ -80,7 +80,7 @@ public class SetShiftPattern extends AppCompatActivity {
 
     // Manage selected dates to add them in a shift
     public void onDayClickInstructions(EventDay eventDay){
-        selectedDay = eventDay.getCalendar();
+ /*       selectedDay = eventDay.getCalendar();
         // Scan calendarDays list and check if this date is already selected. There are 2 cases.
         for(int i = 0; i < calendarDays.size(); i++){
             if(calendarDays.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
@@ -110,12 +110,12 @@ public class SetShiftPattern extends AppCompatActivity {
 
         }
         thisDateIsAlreadySelected = false; //reset flag
-    }
+*/    }
 
     // Open dialog for user to select shift and add selected dates to shift pattern
     public void addShiftToPattern(){
         // Check if there is at least one date selected by user
-        if(calendarDays.size() > shiftDaysCounter){
+ /*       if(calendarDays.size() > shiftDaysCounter){
             shiftBuilder.setItems(R.array.shifts, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -166,15 +166,15 @@ public class SetShiftPattern extends AppCompatActivity {
             // create and show the alert dialog
             AlertDialog messageDialog = messageBuilder.create();
             messageDialog.show();
-        }
-    }
+       }
+*/    }
 
     // Simple function to set CalendarView new colors, add dates to pattern and clear tempCalDays
     public void completeShiftAddition(){
-        patternCalendar.setCalendarDays(calendarDays);
+/*        patternCalendar.setCalendarDays(calendarDays);
         // Set new starting point in calendarDays list
         shiftDaysCounter = calendarDays.size();
-    }
+*/    }
 
     public void doneButtonPressed(){
         // Sort the calendarDays list by date
