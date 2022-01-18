@@ -11,4 +11,18 @@
         <item name="android:paddingEnd">3dp</item>
         <item name="android:textColor">@color/black</item>
     </style>
+
+    <style name="customDatePickerStyle" parent="Theme.MaterialComponents.Light.Dialog.Alert">
+        <item name="android:datePickerStyle">@style/customDatePicker</item>
+        <item name="android:background">@color/my_calendar_background</item>
+        <item name="android:colorPrimary">@color/black</item>
+        <item name="colorButtonNormal">@color/black</item>
+    </style>
+
+    <style name="customDatePicker">
+        <item name="android:datePickerMode">spinner</item>
+        <item name="android:calendarViewShown">false</item>
+        <item name="android:background">@color/my_calendar_background</item>
+    </style>
+
 </resources>

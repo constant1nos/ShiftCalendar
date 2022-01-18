@@ -61,7 +61,14 @@ public class ShiftPattern {
 
         // check if wanted year is greater than pattern's year
         if(thisYear == year) {
-            dayInPattern = (thisDayOfYear - dayOfYear) % patternSize;
+            if(thisDayOfYear >= dayOfYear)
+                dayInPattern = (thisDayOfYear - dayOfYear) % patternSize;
+            else{
+                dayInPattern = dayOfYear - thisDayOfYear;
+                while(dayInPattern > patternSize)
+                    dayInPattern -= patternSize;
+                dayInPattern = patternSize - dayInPattern;
+            }
         }
         else if(thisYear > year) {
             // take the remaining days of pattern's year

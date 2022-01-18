@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
-//import com.applandeo.materialcalendarview.CalendarDay;
 import com.applandeo.materialcalendarview.CalendarView;
 import com.applandeo.materialcalendarview.EventDay;
 import com.applandeo.materialcalendarview.listeners.OnDayClickListener;
@@ -26,7 +25,7 @@ import java.util.List;
 public class SetShiftPattern extends AppCompatActivity {
 
     // holds pattern
-//    List<CalendarDay> calendarDays = new ArrayList<>();
+    List<EventDay> events = new ArrayList<>();
     // holds dates of a shift each time
     List<ShiftPattern> shiftPatternList =  new ArrayList<>();
     // the views
@@ -35,6 +34,7 @@ public class SetShiftPattern extends AppCompatActivity {
     // Two AlertDialogs. One for shift selection and one for messages
     AlertDialog.Builder shiftBuilder, messageBuilder;
 
+    EventDay event;
     Calendar selectedDay;
     int shiftDaysCounter = 0;                   // Starting point of a new shift in calendarDays list
     boolean thisDateIsAlreadySelected = false;  // flag to check if a date is already selected
@@ -80,70 +80,77 @@ public class SetShiftPattern extends AppCompatActivity {
 
     // Manage selected dates to add them in a shift
     public void onDayClickInstructions(EventDay eventDay){
- /*       selectedDay = eventDay.getCalendar();
+        selectedDay = eventDay.getCalendar();
         // Scan calendarDays list and check if this date is already selected. There are 2 cases.
-        for(int i = 0; i < calendarDays.size(); i++){
-            if(calendarDays.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
+        for(int i = 0; i < events.size(); i++){
+            if(events.get(i).getCalendar().get(Calendar.DATE) == selectedDay.get(Calendar.DATE)){
                 // Case 1: A shift has already connected with this date. Remove it from the list.
                 if(i < shiftDaysCounter){
-                    calendarDays.remove(i);
+                    events.remove(i);
                     shiftPatternList.remove(i);
-                    patternCalendar.setCalendarDays(calendarDays);
+                    patternCalendar.setEvents(events);
                     // counter of final dates should also decrease
                     shiftDaysCounter--;
                 }
                 // Case 2: This date is not connected with a shift (fresh pickup). Just remove it.
                 else if(i >= shiftDaysCounter){
-                    calendarDays.remove(i);
+                    events.remove(i);
                     shiftPatternList.remove(i);
-                    patternCalendar.setCalendarDays(calendarDays);
+                    patternCalendar.setEvents(events);
                 }
                 thisDateIsAlreadySelected = true;   // Raise flag to avoid next if statement
                 break;                              // Break for loop, since same date already found
             }
         }
         if(!thisDateIsAlreadySelected){
-            calendarDays.add(new CalendarDay(selectedDay));
+            events.add(new EventDay(selectedDay,R.color.selected_date));
             shiftPatternList.add(new ShiftPattern(selectedDay));
-            calendarDays.get(calendarDays.size()-1).setBackgroundResource(R.color.selected_date);
-            patternCalendar.setCalendarDays(calendarDays);
+            patternCalendar.setEvents(events);
 
         }
         thisDateIsAlreadySelected = false; //reset flag
-*/    }
+    }
 
     // Open dialog for user to select shift and add selected dates to shift pattern
     public void addShiftToPattern(){
         // Check if there is at least one date selected by user
- /*       if(calendarDays.size() > shiftDaysCounter){
+        if(events.size() > shiftDaysCounter){
             shiftBuilder.setItems(R.array.shifts, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     switch (which) {
                         case 0: // day
-                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
-                                calendarDays.get(i).setBackgroundResource(R.color.day);
+                            for(int i = shiftDaysCounter; i < events.size(); i++){
+                                selectedDay = Calendar.getInstance();
+                                selectedDay = events.get(i).getCalendar();
+                                events.set(i,(new EventDay(selectedDay,R.color.day)));
                                 shiftPatternList.get(i).setShift(ShiftPattern.DAY);
                             }
                             completeShiftAddition();
                             break;
                         case 1: // afternoon
-                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
-                                calendarDays.get(i).setBackgroundResource(R.color.evening);
+                            for(int i = shiftDaysCounter; i < events.size(); i++){
+                                selectedDay = Calendar.getInstance();
+                                selectedDay = events.get(i).getCalendar();
+                                events.set(i,(new EventDay(selectedDay,R.color.evening)));
                                 shiftPatternList.get(i).setShift(ShiftPattern.EVENING);
                             }
                             completeShiftAddition();
                             break;
                         case 2: // night
-                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
-                                calendarDays.get(i).setBackgroundResource(R.color.night);
+                            for(int i = shiftDaysCounter; i < events.size(); i++){
+                                selectedDay = Calendar.getInstance();
+                                selectedDay = events.get(i).getCalendar();
+                                events.set(i,(new EventDay(selectedDay,R.color.night)));
                                 shiftPatternList.get(i).setShift(ShiftPattern.NIGHT);
                             }
                             completeShiftAddition();
                             break;
                         case 3: // off
-                            for(int i = shiftDaysCounter; i < calendarDays.size(); i++){
-                                calendarDays.get(i).setBackgroundResource(R.color.off);
+                            for(int i = shiftDaysCounter; i < events.size(); i++){
+                                selectedDay = Calendar.getInstance();
+                                selectedDay = events.get(i).getCalendar();
+                                events.set(i,(new EventDay(selectedDay,R.color.off)));
                                 shiftPatternList.get(i).setShift(ShiftPattern.OFF);
                             }
                             completeShiftAddition();
@@ -167,14 +174,14 @@ public class SetShiftPattern extends AppCompatActivity {
             AlertDialog messageDialog = messageBuilder.create();
             messageDialog.show();
        }
-*/    }
+   }
 
     // Simple function to set CalendarView new colors, add dates to pattern and clear tempCalDays
     public void completeShiftAddition(){
-/*        patternCalendar.setCalendarDays(calendarDays);
+        patternCalendar.setEvents(events);
         // Set new starting point in calendarDays list
-        shiftDaysCounter = calendarDays.size();
-*/    }
+        shiftDaysCounter = events.size();
+   }
 
     public void doneButtonPressed(){
         // Sort the calendarDays list by date

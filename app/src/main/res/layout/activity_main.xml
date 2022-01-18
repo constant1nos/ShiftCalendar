@@ -22,9 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:pagesColor="@color/my_calendar_background"
-        app:todayLabelColor="@color/my_secondary_standard">
-
-    </com.applandeo.materialcalendarview.CalendarView>
+        app:todayLabelColor="@color/my_secondary_standard"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -52,7 +50,7 @@
             android:layout_weight="1" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/floatingActionButton6"
+            android:id="@+id/searchDate"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
